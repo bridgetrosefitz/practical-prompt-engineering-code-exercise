@@ -1,112 +1,108 @@
-(() => {
-  const STORAGE_KEY = 'prompt-library.v1';
+// Prompt Library App
+// Storage keys
+const STORAGE_KEY = 'promptLibrary.v1';
 
-  /** @typedef {{ id: string; title: string; content: string; createdAt: number }} Prompt */
+// Utilities
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  // DOM references
-  const form = document.getElementById('prompt-form');
-  const titleEl = /** @type {HTMLInputElement} */ (document.getElementById('title'));
-  const contentEl = /** @type {HTMLTextAreaElement} */ (document.getElementById('content'));
-  const listEl = /** @type {HTMLUListElement} */ (document.getElementById('list'));
-  const emptyEl = document.getElementById('empty');
-  const countEl = document.getElementById('count');
+function readPrompts() {
+	try {
+		const data = localStorage.getItem(STORAGE_KEY);
+		return data ? JSON.parse(data) : [];
+	} catch {
+		return [];
+	}
+}
 
-  /** @returns {Prompt[]} */
-  function load() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
+function writePrompts(list) {
+	localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
 
-  /** @param {Prompt[]} prompts */
-  function save(prompts) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(prompts));
-    } catch {}
-  }
+function createId() {
+	return 'p_' + Math.random().toString(36).slice(2, 7) + Date.now().toString(36).slice(-4);
+}
 
-  /** @returns {string} */
-  function uid() {
-    return Math.random().toString(36).slice(2) + Date.now().toString(36);
-  }
+function truncateWords(text, limit = 16) {
+	const words = text.trim().split(/\s+/);
+	if (words.length <= limit) return text.trim();
+	return words.slice(0, limit).join(' ') + '…';
+}
 
-  /** @type {Prompt[]} */
-  let prompts = load();
+function renderPrompts() {
+	const list = readPrompts();
+	const container = $('#prompts-list');
+	const empty = $('#empty-state');
+	container.innerHTML = '';
 
-  function render() {
-    // sort newest first
-    const items = [...prompts].sort((a, b) => b.createdAt - a.createdAt);
-    listEl.innerHTML = '';
+	if (list.length === 0) {
+	empty.hidden = false;
+		return;
+	}
+	empty.hidden = true;
 
-    if (items.length === 0) {
-      emptyEl.style.display = 'block';
-    } else {
-      emptyEl.style.display = 'none';
-    }
-    countEl.textContent = String(items.length);
+	for (const p of list) {
+		const card = document.createElement('article');
+		card.className = 'card';
+		card.dataset.id = p.id;
 
-    for (const p of items) {
-      const li = document.createElement('li');
-      li.className = 'card';
+		const h3 = document.createElement('h3');
+		h3.className = 'card-title';
+		h3.textContent = p.title || 'Untitled';
 
-      const header = document.createElement('div');
-      header.className = 'card-header';
+		const preview = document.createElement('p');
+		preview.className = 'card-preview';
+		preview.textContent = truncateWords(p.content || '', 22) || 'No content';
 
-      const h3 = document.createElement('h3');
-      h3.className = 'card-title';
-      h3.textContent = p.title;
+		const del = document.createElement('button');
+		del.className = 'btn-danger';
+		del.type = 'button';
+		del.textContent = 'Delete';
+		del.addEventListener('click', () => deletePrompt(p.id));
 
-      const actions = document.createElement('div');
-      actions.className = 'row';
+		const footer = document.createElement('div');
+		footer.className = 'card-footer';
+		footer.appendChild(del);
 
-      const del = document.createElement('button');
-      del.className = 'danger';
-      del.textContent = 'Delete';
-      del.setAttribute('aria-label', `Delete ${p.title}`);
-      del.addEventListener('click', () => {
-        prompts = prompts.filter((x) => x.id !== p.id);
-        save(prompts);
-        render();
-      });
+		card.append(h3, preview, footer);
+		container.append(card);
+	}
+}
 
-      actions.appendChild(del);
-      header.appendChild(h3);
-      header.appendChild(actions);
+function deletePrompt(id) {
+	const list = readPrompts();
+	const next = list.filter(p => p.id !== id);
+	writePrompts(next);
+	renderPrompts();
+}
 
-      const pre = document.createElement('pre');
-      pre.className = 'prompt-text';
-      pre.textContent = p.content;
+function handleSubmit(e) {
+	e.preventDefault();
+	const title = $('#title').value.trim();
+	const content = $('#content').value.trim();
+	if (!title || !content) {
+		// simple UX hint
+		[$('#title'), $('#content')].forEach((el) => {
+			if (!el.value.trim()) {
+				el.focus();
+			}
+		});
+		return;
+	}
 
-      const meta = document.createElement('div');
-      meta.className = 'meta';
-      const date = new Date(p.createdAt).toLocaleString();
-      meta.textContent = date;
+	const list = readPrompts();
+	const prompt = { id: createId(), title, content, createdAt: Date.now() };
+	list.unshift(prompt); // newest first
+	writePrompts(list);
+	(e.target).reset();
+	renderPrompts();
+}
 
-      li.appendChild(header);
-      li.appendChild(pre);
-      li.appendChild(meta);
-      listEl.appendChild(li);
-    }
-  }
+function boot() {
+	const form = $('#prompt-form');
+	form.addEventListener('submit', handleSubmit);
+	renderPrompts();
+}
 
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const title = titleEl.value.trim();
-    const content = contentEl.value.trim();
-    if (!title || !content) return;
+document.addEventListener('DOMContentLoaded', boot);
 
-    const prompt = { id: uid(), title, content, createdAt: Date.now() };
-    prompts.push(prompt);
-    save(prompts);
-    form.reset();
-    render();
-  });
-
-  // initial render
-  render();
-})();
