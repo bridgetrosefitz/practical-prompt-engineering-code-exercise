@@ -1,51 +1,62 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Prompt Library</title>
-		<link rel="stylesheet" href="src/style.css" />
-	</head>
-	<body>
-		<header class="site-header">
-			<div class="container">
-				<h1>Prompt Library</h1>
-				<p class="tagline">A simple, local prompt collection</p>
-			</div>
-		</header>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prompt Library</title>
+    <link rel="stylesheet" href="src/style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <h1>Prompt Library</h1>
+        <p class="tagline">A simple, local prompt collection</p>
+      </div>
+    </header>
 
-		<main class="container">
-			<section class="panel">
-				<h2 class="panel-title">Add a new prompt</h2>
-				<form id="prompt-form" autocomplete="off" novalidate>
-					<div class="form-grid">
-						<div class="form-field">
-							<label for="title">Title</label>
-							<input id="title" name="title" type="text" placeholder="e.g., Summarize research paper" required />
-						</div>
-						<div class="form-field form-span-2">
-							<label for="content">Content</label>
-							<textarea id="content" name="content" rows="6" placeholder="Write the full prompt..." required></textarea>
-						</div>
-					</div>
-					<div class="form-actions">
-						<button type="submit" class="btn-primary">Save Prompt</button>
-					</div>
-				</form>
-			</section>
+    <main class="container">
+      <section class="panel">
+        <h2 class="panel-title">Add a new prompt</h2>
+        <form id="prompt-form" autocomplete="off" novalidate>
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="title">Title</label>
+              <input
+                id="title"
+                name="title"
+                type="text"
+                placeholder="e.g., Summarize research paper"
+                required
+              />
+            </div>
+            <div class="form-field form-span-2">
+              <label for="content">Content</label>
+              <textarea
+                id="content"
+                name="content"
+                rows="6"
+                placeholder="Write the full prompt..."
+                required
+              ></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Save Prompt</button>
+          </div>
+        </form>
+      </section>
 
-					<section class="panel">
-						<div class="panel-header">
-							<h2 class="panel-title">Saved prompts</h2>
-						</div>
-				<div id="prompts-list" class="cards"></div>
-				<div id="empty-state" class="empty-state" hidden>
-					<p>No prompts saved yet. Add your first prompt above.</p>
-				</div>
-			</section>
-		</main>
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Saved prompts</h2>
+        </div>
+        <div id="prompts-list" class="cards"></div>
+        <div id="empty-state" class="empty-state" hidden>
+          <p>No prompts saved yet. Add your first prompt above.</p>
+        </div>
+      </section>
+    </main>
 
-		<script src="src/app.js" defer></script>
-	</body>
-	</html>
-
+    <script src="src/app.js" defer></script>
+  </body>
+</html>
