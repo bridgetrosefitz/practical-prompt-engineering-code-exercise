@@ -33,6 +33,34 @@ function truncateWords(text, limit = 16) {
   return words.slice(0, limit).join(" ") + "…";
 }
 
+// Ratings
+function setRating(promptId, value) {
+  const list = readPrompts();
+  const idx = list.findIndex(p => p.id === promptId);
+  if (idx === -1) return;
+  const next = Math.min(5, Math.max(0, Number(value) || 0));
+  list[idx].rating = next;
+  writePrompts(list);
+  renderPrompts();
+}
+
+function renderStars(rating) {
+  const r = Math.min(5, Math.max(0, Number(rating) || 0));
+  return Array.from({ length: 5 }, (_, i) => {
+    const val = i + 1;
+    const filled = val <= r;
+    return `
+      <button
+        type="button"
+        class="star"
+        data-star="${val}"
+        aria-label="Rate ${val} star${val > 1 ? 's' : ''}"
+        aria-pressed="${filled}"
+        ${filled ? 'data-filled="true"' : ''}
+      >${filled ? '★' : '☆'}</button>`;
+  }).join("");
+}
+
 function renderPrompts() {
   const list = readPrompts();
   const container = $("#prompts-list");
@@ -58,6 +86,13 @@ function renderPrompts() {
     preview.className = "card-preview";
     preview.textContent = truncateWords(p.content || "", 22) || "No content";
 
+    // Rating UI
+    const ratingWrap = document.createElement("div");
+    ratingWrap.className = "rating";
+    ratingWrap.setAttribute("role", "radiogroup");
+    ratingWrap.setAttribute("aria-label", "Rate prompt effectiveness");
+    ratingWrap.innerHTML = renderStars(p.rating || 0);
+
     const del = document.createElement("button");
     del.className = "btn-danger";
     del.type = "button";
@@ -68,7 +103,34 @@ function renderPrompts() {
     footer.className = "card-footer";
     footer.appendChild(del);
 
-    card.append(h3, preview, footer);
+    // Rating interactions
+    ratingWrap.addEventListener("click", e => {
+      const btn = e.target.closest("button.star");
+      if (!btn) return;
+      const val = Number(btn.dataset.star);
+      const current = (readPrompts().find(x => x.id === p.id)?.rating) || 0;
+      // toggle-to-clear when clicking same value
+      setRating(p.id, current === val ? 0 : val);
+    });
+    ratingWrap.addEventListener("keydown", e => {
+      const current = (readPrompts().find(x => x.id === p.id)?.rating) || 0;
+      if (["ArrowRight", "ArrowUp"].includes(e.key)) {
+        e.preventDefault();
+        setRating(p.id, Math.min(5, current + 1));
+      } else if (["ArrowLeft", "ArrowDown"].includes(e.key)) {
+        e.preventDefault();
+        setRating(p.id, Math.max(0, current - 1));
+      } else if (/^[1-5]$/.test(e.key)) {
+        e.preventDefault();
+        setRating(p.id, Number(e.key));
+      } else if (e.key === "0" || e.key === "Backspace" || e.key === "Delete") {
+        e.preventDefault();
+        setRating(p.id, 0);
+      }
+    });
+    ratingWrap.tabIndex = 0;
+
+    card.append(h3, preview, ratingWrap, footer);
     container.append(card);
   }
 }
@@ -95,7 +157,7 @@ function handleSubmit(e) {
   }
 
   const list = readPrompts();
-  const prompt = { id: createId(), title, content, createdAt: Date.now() };
+  const prompt = { id: createId(), title, content, createdAt: Date.now(), rating: 0 };
   list.unshift(prompt); // newest first
   writePrompts(list);
   e.target.reset();

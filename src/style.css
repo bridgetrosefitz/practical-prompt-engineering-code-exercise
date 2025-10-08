@@ -198,6 +198,18 @@ textarea:focus {
   font-size: 14px;
   margin: 0;
 }
+.rating { display: flex; gap: 6px; align-items: center; margin-top: 2px; }
+.rating .star {
+  background: transparent;
+  border: 0;
+  padding: 4px 6px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: #ffcf6e;
+}
+.rating .star[data-filled="true"] { color: #ffc107; }
+.rating .star:focus { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 6px; }
 .card-footer {
   display: flex;
   align-items: center;
